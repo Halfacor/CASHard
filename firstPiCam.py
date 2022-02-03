@@ -10,7 +10,7 @@ try:
     camera = PiCamera()
     camera.resolution = (2592, 1944)
     camera.start_preview()
-    sleep(50)
+    sleep(5)
     #camera.capture('/home/pi/Desktop/firstPICam.jpg')
     camera.stop_preview()
 except:

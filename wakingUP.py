@@ -27,7 +27,7 @@ else:
     GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
     GPIO.setup(GPIO_ECHO, GPIO.IN)
     timeout = 5
-# if timeout, return -1 
+# if timeout, return -1000
 def distance():
     ts = time.time()
     #print("before sending pulse")
@@ -46,7 +46,7 @@ def distance():
     while GPIO.input(GPIO_ECHO) == 0:
         StartTime = time.time()
         if StartTime > ts + timeout:
-            return -1
+            return -1000
  
     #print("signal sent, ECHO is high")
     # save time of arrival
@@ -54,7 +54,7 @@ def distance():
     while GPIO.input(GPIO_ECHO) == 1:
         StopTime = time.time()
         if StopTime > ts + timeout:
-            return -1
+            return -1000
     #print("signal received, ECHO is low")
     # time difference between start and arrival
     TimeElapsed = StopTime - StartTime
