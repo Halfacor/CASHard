@@ -8,43 +8,57 @@
 from picamera import PiCamera
 import RPi.GPIO as GPIO
 import time
- 
-#Cam settings
-camera = PiCamera()
-camera.resolution = (2592, 1944)
 
-#GPIO Mode (BOARD / BCM)
-GPIO.setmode(GPIO.BCM)
- 
-#set GPIO Pins
-GPIO_TRIGGER = 18
-GPIO_ECHO = 24
- 
-#set GPIO direction (IN / OUT)
-GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
-GPIO.setup(GPIO_ECHO, GPIO.IN)
- 
+try: 
+    #Cam settings
+    camera = PiCamera()
+    camera.resolution = (2592, 1944)
+except:
+    print("camera down")
+else:
+    #GPIO Mode (BOARD / BCM)
+    GPIO.setmode(GPIO.BCM)
+     
+    #set GPIO Pins
+    GPIO_TRIGGER = 18
+    GPIO_ECHO = 24
+     
+    #set GPIO direction (IN / OUT)
+    GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
+    GPIO.setup(GPIO_ECHO, GPIO.IN)
+    timeout = 5
+# if timeout, return -1 
 def distance():
+    ts = time.time()
+    #print("before sending pulse")
     # set Trigger to HIGH
     GPIO.output(GPIO_TRIGGER, True)
- 
+    #print("trigger is high")
     # set Trigger after 0.01ms to LOW
     time.sleep(0.00001)
     GPIO.output(GPIO_TRIGGER, False)
- 
+    #print("done sending pulse")
+    
     StartTime = time.time()
     StopTime = time.time()
- 
+     
     # save StartTime
     while GPIO.input(GPIO_ECHO) == 0:
         StartTime = time.time()
+        if StartTime > ts + timeout:
+            return -1
  
+    #print("signal sent, ECHO is high")
     # save time of arrival
+    # time.sleep(10)
     while GPIO.input(GPIO_ECHO) == 1:
         StopTime = time.time()
- 
+        if StopTime > ts + timeout:
+            return -1
+    #print("signal received, ECHO is low")
     # time difference between start and arrival
     TimeElapsed = StopTime - StartTime
+    #print(f"time elapsed: {TimeElapsed}")
     # multiply with the sonic speed (34300 cm/s)
     # and divide by 2, because there and back
     distance = (TimeElapsed * 34300) / 2
@@ -53,14 +67,30 @@ def distance():
  
 if __name__ == '__main__':
     try:
-        prevDist = -1
+        prevDist = 1200
         while True:
             dist = distance()
-            if prevDist > dist + 10:
-                print(f"Something approached from {prevDist} cm to {dist} cm")
-                camera.capture(f"/home/pi/Desktop/{prevDist - dist}.jpg")
+            print(f"distance is: {dist}")
+            if dist < 0:
+                print("Motion sensor broken")
+            elif dist > 1200:
+                print("Nothing within range")
+            else:
+                if prevDist > dist + 10:
+                    if prevDist >= 1200:
+                        print("Something showed up")
+                    else:
+                        print(f"Something is approaching from {prevDist} cm to {dist} cm")
+                elif abs(prevDist - dist) <= 5:
+                    print(f"Obj stopped")
+                    try:
+                        camera.capture(f"/home/pi/Desktop/obj.jpg")
+                    except:
+                        print("camera down")
+                    else:
+                        print("picture taken")
             prevDist = dist
-            time.sleep(1)
+            time.sleep(5)
  
         # Reset by pressing CTRL + C
     except KeyboardInterrupt:

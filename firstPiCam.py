@@ -10,8 +10,8 @@ try:
     camera = PiCamera()
     camera.resolution = (2592, 1944)
     camera.start_preview()
-    sleep(5)
-    camera.capture('/home/pi/Desktop/firstPICam.jpg')
+    sleep(50)
+    #camera.capture('/home/pi/Desktop/firstPICam.jpg')
     camera.stop_preview()
 except:
     print("camera not available")
